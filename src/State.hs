@@ -5,11 +5,7 @@ import Control.Monad
 newtype ST s a = ST {apply::s -> (s, a)}
 
 instance Functor (ST s) where
-  fmap f sa = ST $ \s ->
-    let
-      (ns, a) = apply sa s
-    in
-      (ns, f a)
+  fmap = liftM
 
 instance Applicative (ST s) where
   pure  = return
