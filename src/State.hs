@@ -24,24 +24,46 @@ type Stack = [Int]
 pop :: ST Stack Int
 pop = ST $ \(x:xs) -> (xs, x)
 
-push :: Int -> ST Stack ()
-push x = ST $ \xs -> (x:xs, ())
+push :: Int -> ST Stack Int
+push x = ST $ \xs -> (x:xs, x)
 
-pop2 :: ST Stack (Int, Int)
-pop2 = do
+peek :: ST Stack Int
+peek = ST $ \(x:xs) -> (x:xs, x)
+
+unOp :: (Int -> Int) -> ST Stack Int
+unOp f = do
+  x <- pop
+  push (f x)
+
+binOp :: (Int -> Int -> Int) -> ST Stack Int
+binOp f = do
   x <- pop
   y <- pop
-  push 42
-  return (x, y)
+  push (f x y)
 
-pop2' :: ST Stack (Int, Int)
-pop2' = 
-  pop >>= \x ->
-  pop >>= \y ->
-  push 42 >>
-  return (x, y)
+inc :: ST Stack Int
+inc = unOp (+1)
+
+dec :: ST Stack Int
+dec = unOp ((-)1)
+
+add :: ST Stack Int
+add = binOp (+)
+
+sub :: ST Stack Int
+sub = binOp (-)
 
 stateMain :: IO()
 stateMain = do
-  print (apply pop2 [1, 2, 3])
-  print (apply pop2' [4, 5, 6])
+  print (
+    apply (
+      do sub; add; inc)
+        [1, 2, 3, 4, 5])
+  print (
+    apply (
+      sub >> add >> inc)
+        [1, 2, 3, 4, 5])
+  print (
+    apply (
+      sub >>= \_ -> add >>= \_ -> inc)
+        [1, 2, 3, 4, 5])        
